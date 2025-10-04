@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arka Garai - Portfolio</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://www.cdn.jsdelivr.net/gh/ryanoasis/nerd-fonts@3.0.2/css/jetbrains-mono.min.css">
+    <style>
+        /* General Styling and Resets */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'JetBrains Mono Nerd Font', monospace;
+            background: #0E1015; /* Replit-style dark background */
+            color: #EAECEF; /* Off-white text */
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 80px; /* --- MODIFICATION: Made sidebar thinner --- */
+            height: 100vh;
+            background: #14161B;
+            border-right: 1px solid rgba(163, 132, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            z-index: 1000;
+            transition: transform 0.4s ease-in-out;
+        }
+        
+        .sidebar-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            color: #EAECEF;
+            font-weight: 600;
+            text-decoration: none; /* --- MODIFICATION: Removed underline from link --- */
+            transition: all 0.3s; /* --- MODIFICATION: Added transition for hover effect --- */
+        }
+
+        /* --- MODIFICATION: Added hover effect for the logo link --- */
+        .sidebar-top:hover {
+            transform: scale(1.05);
+            color: #F7DF1E;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        
+        .sidebar-socials {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .sidebar-socials a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* --- MODIFICATION: Scoped link styles to only the nav icons --- */
+        .sidebar-nav a {
+            position: relative; /* For tooltip positioning */
+            color: #8D949E; /* Muted grey for inactive icons */
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            color: #F7DF1E; /* Bright yellow accent */
+            transform: scale(1.1);
+        }
+        
+        /* Tooltip Styles */
+        .sidebar-nav a::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%) translateX(5px);
+            background-color: #0E1015;
+            color: #EAECEF;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid rgba(163, 132, 255, 0.2);
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            z-index: 1001;
+            margin-left: 15px;
+        }
+
+        .sidebar-nav a:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .sidebar svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Hamburger Menu for Mobile */
+        .hamburger {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            width: 30px;
+            height: 24px;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .hamburger span {
+            width: 100%;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
+        /* Hamburger animation */
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(10px) rotate(45deg);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-11px) rotate(-45deg);
+        }
+
+        /* Main Content Wrapper */
+        .main-content {
+            position: relative;
+            isolation: isolate; /* Creates a new stacking context */
+            margin-left: 80px; /* --- MODIFICATION: Adjusted for thinner sidebar --- */
+        }
+        
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        section {
+            min-height: 100vh;
+            padding: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Hero Section */
+        .hero {
+            justify-content: space-between;
+            flex-direction: row;
+            background: transparent;
+        }
+
+        .hero-content {
+            max-width: 700px; /* Increased max-width for longer text */
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero .name-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            vertical-align: middle; /* --- MODIFICATION: Better alignment --- */
+        }
+
+        .logo-box {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #A384FF 0%, #7C5DFF 100%);
+            border-radius: 12px;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .hero-subtitle {
+            color: #94a3b8;
+            font-size: 1.125rem;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .hero-buttons-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            display: inline-block;
+            text-decoration: none;
+            padding: 16px 40px;
+            border: 2px solid #A384FF;
+            background: transparent;
+            color: #A384FF;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            border-radius: 8px;
+        }
+
+        .cta-button:hover {
+            background: #A384FF;
+            color: #0E1015;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(163, 132, 255, 0.2);
+        }
+
+        /* Section Styling */
+        .about, .portfolio, .contact {
+            align-items: flex-start;
+            background: #161922; /* Slightly lighter dark for sections */
+        }
+        
+        .portfolio > div {
+            width: 100%;
+        }
+
+        h2 {
+            font-size: 3.75rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100px;
+            height: 4px;
+            background: #A384FF;
+            border-radius: 2px;
+        }
+
+        .about-text {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            max-width: 900px;
+            margin-bottom: 4rem;
+            color: #bdc5d4;
+        }
+
+        /* Animation Styles */
+        .typing-cursor {
+            color: #EAECEF;
+        }
+        .typing-cursor::after {
+            content: '|';
+            color: #A384FF;
+            font-weight: bold;
+            animation: blink-caret 0.75s step-end infinite;
+        }
+        @keyframes blink-caret {
+            from, to { opacity: 1 }
+            50% { opacity: 0 }
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 2rem;
+        }
+
+        .skill-card {
+            background: rgba(40, 44, 58, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(163, 132, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(163, 132, 255, 0.5);
+            box-shadow: 0 12px 40px rgba(163, 132, 255, 0.1);
+            background: rgba(40, 44, 58, 0.8);
+        }
+
+        .skill-icon {
+            width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem;
+            transition: transform 0.3s;
+        }
+
+        .skill-icon svg, .skill-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .skill-card:hover .skill-icon {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .skill-name {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 1rem;
+        }
+        
+        /* Portfolio Section */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .project-card {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 320px;
+            background: rgba(40, 44, 58, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(163, 132, 255, 0.1);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border-color: rgba(163, 132, 255, 0.5);
+        }
+        
+        .project-bg {
+            position: absolute; inset: 0; z-index: 0; overflow: hidden;
+        }
+
+        .project-image {
+            width: 100%; height: 100%; object-fit: cover;
+            opacity: 0.1;
+            transition: all 0.4s;
+            filter: grayscale(80%);
+        }
+
+        .project-card:hover .project-image {
+            opacity: 0.2; transform: scale(1.1); filter: grayscale(20%);
+        }
+
+        .project-info {
+            position: absolute; inset: 0; padding: 2rem;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            z-index: 2;
+            background: linear-gradient(to top, rgba(14, 16, 21, 0.95) 0%, transparent 60%);
+        }
+
+        .project-number {
+            position: absolute; top: 1.5rem; right: 1.5rem;
+            font-size: 3rem; font-weight: bold;
+            color: rgba(163, 132, 255, 0.2);
+            transition: all 0.4s;
+        }
+
+        .project-card:hover .project-number {
+            color: rgba(163, 132, 255, 0.4); transform: scale(1.2);
+        }
+
+        .project-title {
+            font-size: 1.5rem; font-weight: bold; margin-bottom: 0.75rem;
+            color: #ffffff; transition: all 0.3s;
+        }
+
+        .project-card:hover .project-title {
+            color: #A384FF; transform: translateX(5px);
+        }
+
+        .project-tech {
+            font-size: 0.875rem; color: #94a3b8; display: flex;
+            flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;
+        }
+
+        .tech-tag {
+            background: rgba(163, 132, 255, 0.1);
+            color: #A384FF;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px; font-size: 0.75rem;
+            border: 1px solid rgba(163, 132, 255, 0.2);
+        }
+
+        .project-link {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            color: #A384FF; font-size: 0.875rem; font-weight: 600;
+            opacity: 0; transform: translateY(10px); transition: all 0.3s;
+        }
+
+        .project-card:hover .project-link {
+            opacity: 1; transform: translateY(0);
+        }
+
+        /* Contact Section */
+        .contact-text {
+            font-size: 1.25rem; line-height: 1.8; max-width: 700px;
+            margin-bottom: 3rem; color: #bdc5d4;
+        }
+
+        .social-links {
+            display: flex; gap: 2rem; flex-wrap: wrap;
+        }
+
+        .social-icon {
+            width: 100px; height: 100px;
+            background: rgba(40, 44, 58, 0.5); backdrop-filter: blur(10px);
+            border: 2px solid rgba(163, 132, 255, 0.2);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none; transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+
+        .social-icon::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, #A384FF, #7C5DFF);
+            opacity: 0; transition: opacity 0.3s;
+        }
+
+        .social-icon:hover::before {
+            opacity: 1;
+        }
+
+        .social-icon svg {
+            width: 48px; height: 48px;
+            transition: all 0.3s; position: relative; z-index: 1;
+        }
+
+        .social-icon:hover {
+            transform: translateY(-10px) scale(1.1);
+            box-shadow: 0 12px 40px rgba(163, 132, 255, 0.2);
+            border-color: #A384FF;
+        }
+
+        .social-icon:hover svg {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            section { padding: 80px 40px; }
+            .hero { flex-direction: column; justify-content: center; text-align: center; }
+            .hero-content { max-width: 100%; }
+            .hero h1 { font-size: 3.5rem; }
+            h2 { font-size: 2.5rem; }
+            .hero-buttons-container {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+                background: rgba(22, 25, 34, 0.9);
+                backdrop-filter: blur(10px);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .hamburger { display: flex; }
+            
+            .hero h1 { font-size: 3rem; }
+            .logo-box { width: 60px; height: 60px; }
+            
+            h2 { font-size: 2.2rem; }
+            .skills-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; }
+            .social-icon { width: 80px; height: 80px; }
+            .social-icon svg { width: 36px; height: 36px; }
+        }
+
+        @media (max-width: 480px) {
+            section { padding: 60px 20px; }
+            .hero h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <nav class="sidebar">
+        <!-- --- MODIFICATION: Changed div to a link and it now points to #home --- -->
+        <a href="#home" class="sidebar-top" aria-label="Go to Home">
+            <svg class="logo" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="48" height="48" rx="8" fill="#A384FF"/>
+                <path d="M18 19 L26 24 L18 29" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M28 29 H 32" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Arka</span>
+        </a>
+        <div class="sidebar-nav">
+            <a href="#home" class="active" aria-label="Home" data-tooltip="Home">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
+            </a>
+            <a href="#about" aria-label="About" data-tooltip="About">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path></svg>
+            </a>
+            <a href="#portfolio" aria-label="Portfolio" data-tooltip="Portfolio">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zM10 4h4v2h-4V4zm10 15H4V8h16v11z"></path></svg>
+            </a>
+            <a href="#contact" aria-label="Contact" data-tooltip="Contact">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
+            </a>
+        </div>
+        <div class="sidebar-socials">
+            <a href="https://www.linkedin.com/in/arka-garai-908775378/" target="_blank" aria-label="LinkedIn" data-tooltip="LinkedIn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77Z"></path></svg>
+            </a>
+            <a href="https://github.com/arka6fx" target="_blank" aria-label="GitHub" data-tooltip="GitHub">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.95 0-1.1.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.69 0 3.85-2.34 4.7-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 22 12c0-5.52-4.48-10-10-10z"></path></svg>
+            </a>
+            <a href="https://x.com/arka6fx" target="_blank" aria-label="X" data-tooltip="X (Twitter)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section id="home" class="hero">
+            <canvas id="bg-canvas"></canvas>
+            <div class="hero-content">
+                <!-- --- MODIFICATION: Simplified H1 and removed the 'A' icon --- -->
+                <h1>
+                    Hi <br> I'm <span class="name-box">
+                        Arka
+                    </span><br>
+                    a <span id="typing-effect" class="typing-cursor"></span>
+                </h1>
+                <p class="hero-subtitle">I am a third-year computer engineering student , passionate about exploring the realms of coding, machine learning, and building robust applications.</p>
+                <div class="hero-buttons-container">
+                    <a href="#contact" class="cta-button">CONTACT ME</a>
+                    <a href="resume.pdf" download="ArkaGarai_Resume.pdf" class="cta-button">DOWNLOAD CV</a>
+                </div>
+            </div>
+            
+        </section>
+
+        <section id="about" class="about">
+            <div>
+                <h2>About Me</h2>
+                <p class="about-text">
+                    I'm a passionate software developer with a unique background that has prepared me to be a collaborative team player who communicates effectively, approaches problems analytically, and possesses the technical skills to tackle any challenge. My journey in technology is driven by curiosity and a desire to create meaningful impact through code.
+                </p>
+
+                <h3 style="font-size: 1.75rem; margin-bottom: 2rem; color: #e2e8f0;">Technologies & Skills</h3>
+                <div class="skills-grid">
+                    <div class="skill-card"><div class="skill-icon"><svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48">
+                                <path fill="#F44336" d="M23.65,24.898c-0.998-1.609-1.722-2.943-2.725-5.455C19.229,15.2,31.24,11.366,26.37,3.999c2.111,5.089-7.577,8.235-8.477,12.473C17.07,20.37,23.645,24.898,23.65,24.898z"></path><path fill="#F44336" d="M23.878,17.27c-0.192,2.516,2.229,3.857,2.299,5.695c0.056,1.496-1.447,2.743-1.447,2.743s2.728-0.536,3.579-2.818c0.945-2.534-1.834-4.269-1.548-6.298c0.267-1.938,6.031-5.543,6.031-5.543S24.311,11.611,23.878,17.27z"></path><g><path fill="#1565C0" d="M32.084 25.055c1.754-.394 3.233.723 3.233 2.01 0 2.901-4.021 5.643-4.021 5.643s6.225-.742 6.225-5.505C37.521 24.053 34.464 23.266 32.084 25.055zM29.129 27.395c0 0 1.941-1.383 2.458-1.902-4.763 1.011-15.638 1.147-15.638.269 0-.809 3.507-1.638 3.507-1.638s-7.773-.112-7.773 2.181C11.683 28.695 21.858 28.866 29.129 27.395z"></path><path fill="#1565C0" d="M27.935,29.571c-4.509,1.499-12.814,1.02-10.354-0.993c-1.198,0-2.974,0.963-2.974,1.889c0,1.857,8.982,3.291,15.63,0.572L27.935,29.571z"></path><path fill="#1565C0" d="M18.686,32.739c-1.636,0-2.695,1.054-2.695,1.822c0,2.391,9.76,2.632,13.627,0.205l-2.458-1.632C24.271,34.404,17.014,34.579,18.686,32.739z"></path><path fill="#1565C0" d="M36.281,36.632c0-0.936-1.055-1.377-1.433-1.588c2.228,5.373-22.317,4.956-22.317,1.784c0-0.721,1.807-1.427,3.477-1.093l-1.42-0.839C11.26,34.374,9,35.837,9,37.017C9,42.52,36.281,42.255,36.281,36.632z"></path><path fill="#1565C0" d="M39,38.604c-4.146,4.095-14.659,5.587-25.231,3.057C24.341,46.164,38.95,43.628,39,38.604z"></path></g>
+                                </svg></div><div class="skill-name">Java</div></div>
+                    <div class="skill-card"><div class="skill-icon"><svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M49.6397 0C24.2535 0 25.8385 11.009 25.8385 11.009L25.8667 22.4146H50.0924V25.8389H16.2447C16.2447 25.8389 0 23.9966 0 49.6111C0 75.2264 14.1788 74.318 14.1788 74.318H22.6406V62.4315C22.6406 62.4315 22.1844 48.2528 36.593 48.2528H60.6205C60.6205 48.2528 74.1199 48.4709 74.1199 35.206V13.2734C74.1199 13.2734 76.1702 0 49.6397 0ZM36.2817 7.67007C36.8542 7.66955 37.4211 7.78193 37.9501 8.00076C38.4791 8.2196 38.9598 8.5406 39.3646 8.9454C39.7693 9.35019 40.0903 9.83084 40.3092 10.3598C40.528 10.8888 40.6404 11.4558 40.6399 12.0282C40.6404 12.6007 40.528 13.1677 40.3092 13.6967C40.0903 14.2256 39.7693 14.7063 39.3646 15.1111C38.9598 15.5159 38.4791 15.8369 37.9501 16.0557C37.4211 16.2746 36.8542 16.3869 36.2817 16.3864C35.7092 16.3869 35.1423 16.2746 34.6133 16.0557C34.0843 15.8369 33.6037 15.5159 33.1989 15.1111C32.7941 14.7063 32.4731 14.2256 32.2542 13.6967C32.0354 13.1677 31.923 12.6007 31.9235 12.0282C31.923 11.4558 32.0354 10.8888 32.2542 10.3598C32.4731 9.83084 32.7941 9.35019 33.1989 8.9454C33.6037 8.5406 34.0843 8.2196 34.6133 8.00076C35.1423 7.78193 35.7092 7.66955 36.2817 7.67007Z" fill="url(#paint0_linear_790_3247)"></path>
+                                <path d="M50.3607 99.4801C75.747 99.4801 74.1619 88.4711 74.1619 88.4711L74.1337 77.0658H49.9076V73.6415H83.7553C83.7553 73.6415 100 75.4838 100 49.8685C100 24.2535 85.8213 25.1619 85.8213 25.1619H77.3594V37.0481C77.3594 37.0481 77.8156 51.2268 63.407 51.2268H39.3795C39.3795 51.2268 25.8801 51.0087 25.8801 64.274V86.207C25.8801 86.207 23.8302 99.4801 50.3603 99.4801H50.3607ZM63.7187 91.8108C63.1462 91.8113 62.5793 91.6989 62.0503 91.4801C61.5213 91.2612 61.0407 90.9402 60.6359 90.5354C60.2311 90.1306 59.9101 89.65 59.6912 89.121C59.4724 88.592 59.36 88.0251 59.3605 87.4526C59.36 86.8801 59.4723 86.3131 59.6911 85.784C59.9099 85.255 60.2309 84.7743 60.6357 84.3695C61.0405 83.9646 61.5212 83.6436 62.0502 83.4247C62.5792 83.2059 63.1462 83.0935 63.7187 83.094C64.2912 83.0935 64.8581 83.2059 65.3871 83.4247C65.9161 83.6435 66.3968 83.9645 66.8015 84.3693C67.2063 84.7741 67.5273 85.2548 67.7462 85.7838C67.965 86.3128 68.0774 86.8797 68.0769 87.4522C68.0774 88.0247 67.965 88.5916 67.7462 89.1206C67.5273 89.6496 67.2063 90.1302 66.8015 90.535C66.3968 90.9398 65.9161 91.2608 65.3871 91.4797C64.8581 91.6985 64.2912 91.8109 63.7187 91.8104V91.8108Z" fill="url(#paint1_linear_790_3247)"></path>
+                                <defs>
+                                <linearGradient id="paint0_linear_790_3247" x1="9.60996" y1="8.94762" x2="59.1669" y2="58.0102" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#387EB8"></stop>
+                                <stop offset="1" stop-color="#366994"></stop>
+                                </linearGradient>
+                                <linearGradient id="paint1_linear_790_3247" x1="40.0281" y1="40.4527" x2="93.2466" y2="90.7618" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#FFE052"></stop>
+                                <stop offset="1" stop-color="#FFC331"></stop>
+                                </linearGradient>
+                                </defs>
+                                </svg></div><div class="skill-name">Python</div></div>
+                    <div class="skill-card"><div class="skill-icon"><svg width="89" height="100" viewBox="0 0 89 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8.02139 90.034L0 0H88.1867L80.1653 89.9854L44.0204 100" fill="#E44D26"></path>
+                                <path d="M44.093 92.344V7.39014H80.1407L73.2617 84.201" fill="#F16529"></path>
+                                <path d="M16.3831 18.4009H44.0933V29.4364H28.4881L29.509 40.7392H44.0933V51.7504H19.3972L16.3831 18.4009ZM19.8833 57.2925H30.9674L31.7452 66.116L44.0933 69.4218V80.9434L21.439 74.6235" fill="#EBEBEB"></path>
+                                <path d="M71.7058 18.4009H44.0442V29.4364H70.6849L71.7058 18.4009ZM69.6883 40.7392H44.0442V51.7747H57.6562L56.368 66.116L44.0442 69.4218V80.8948L66.6499 74.6235" fill="white"></path>
+                                </svg></div><div class="skill-name">HTML</div></div>
+                    <div class="skill-card"><div class="skill-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 296297 333333" xmlns:xlink="http://www.w3.org/1999/xlink" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd"><defs><linearGradient id="id4" gradientUnits="userSpaceOnUse" x1="54128.7" y1="79355.5" x2="240318" y2="79355.5"><stop offset="0" stop-color="#e8e7e5"></stop><stop offset="1" stop-color="#fff"></stop></linearGradient><linearGradient id="id5" gradientUnits="userSpaceOnUse" x1="62019.3" y1="202868" x2="233515" y2="202868"><stop offset="0" stop-color="#e8e7e5"></stop><stop offset="1" stop-color="#fff"></stop></linearGradient><linearGradient id="id6" gradientUnits="userSpaceOnUse" x1="104963" y1="99616.9" x2="104963" y2="171021"><stop offset="0" stop-color="#d1d3d4"></stop><stop offset=".388" stop-color="#d1d3d4"></stop><stop offset="1" stop-color="#d1d3d4"></stop></linearGradient><linearGradient id="id7" gradientUnits="userSpaceOnUse" xlink:href="#id6" x1="194179" y1="61185.8" x2="194179" y2="135407"></linearGradient><mask id="id0"><linearGradient id="id1" gradientUnits="userSpaceOnUse" x1="104963" y1="99616.9" x2="104963" y2="171021"><stop offset="0" stop-opacity="0" stop-color="#fff"></stop><stop offset=".388" stop-color="#fff"></stop><stop offset="1" stop-opacity=".831" stop-color="#fff"></stop></linearGradient><path fill="url(#id1)" d="M61737 99467h86453v71704H61737z"></path></mask><mask id="id2"><linearGradient id="id3" gradientUnits="userSpaceOnUse" x1="194179" y1="61185.8" x2="194179" y2="135407"><stop offset="0" stop-opacity="0" stop-color="#fff"></stop><stop offset=".388" stop-color="#fff"></stop><stop offset="1" stop-opacity=".831" stop-color="#fff"></stop></linearGradient><path fill="url(#id3)" d="M147890 61036h92578v74521h-92578z"></path></mask><style>.fil6{fill:#000;fill-opacity:.05098}</style></defs><g id="Layer_x0020_1"><g id="_513085304"><path fill="#2062af" d="M268517 300922l-120369 32411-120371-32411L0 0h296297z"></path><path fill="#3c9cd7" d="M148146 24374v283109l273 74 97409-26229 22485-256954z"></path><path fill="#fff" d="M148040 99617l-86153 35880 2857 35524 83296-35614 88604-37883 3674-36339-92278 38432z"></path><path mask="url(#id0)" fill="url(#id6)" d="M61887 135497l2857 35524 83295-35614V99617z"></path><path mask="url(#id2)" fill="url(#id7)" d="M240318 61186l-92278 38431v35790l88604-37883z"></path><path fill="url(#id5)" d="M62019 135497l2858 35524 127806 407-2859 47365-42055 11840-40428-10208-2450-29399H67327l4900 56756 75950 22457 75538-22050 9800-112692z"></path><path class="fil6" d="M148040 135497H61888l2857 35524 83295 266v-35790zm0 95022l-408 114-40422-10208-2450-29399H67197l4899 56756 75944 22457v-39720z"></path><path fill="url(#id4)" d="M54129 61186h186189l-3674 36339H58620l-4491-36339z"></path><path class="fil6" d="M148040 61186H54129l4491 36339h89420z"></path></g></g></svg></div><div class="skill-name">CSS</div></div>
+                    <div class="skill-card">
+                        <div class="skill-icon">
+                            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <g id="js">
+                                <g id="js_2">
+                                <path id="Vector" d="M100 0H0V100H100V0Z" fill="#F7DF1E"/>
+                                <path id="Vector_2" d="M67.1745 78.1254C69.1888 81.4143 71.8094 83.8318 76.4444 83.8318C80.338 83.8318 82.8253 81.8857 82.8253 79.1969C82.8253 75.9746 80.2698 74.8334 75.9841 72.9588L73.6348 71.9508C66.8539 69.0619 62.3491 65.4429 62.3491 57.7921C62.3491 50.7445 67.719 45.3794 76.111 45.3794C82.0856 45.3794 86.3809 47.4588 89.4761 52.9032L82.1586 57.6016C80.5475 54.7127 78.8094 53.5746 76.111 53.5746C73.3587 53.5746 71.6142 55.3207 71.6142 57.6016C71.6142 60.4207 73.3602 61.5619 77.392 63.308L79.7412 64.3143C87.7253 67.7381 92.2333 71.2286 92.2333 79.0762C92.2333 87.5365 85.5872 92.1715 76.6618 92.1715C67.9348 92.1715 62.2967 88.0127 59.538 82.5619L67.1745 78.1254ZM33.9793 78.9397C35.4555 81.5588 36.7983 83.773 40.0269 83.773C43.1142 83.773 45.0618 82.5651 45.0618 77.8683V45.9159H54.4586V77.9953C54.4586 87.7254 48.7539 92.154 40.4269 92.154C32.9031 92.154 28.546 88.2603 26.3301 83.5707L33.9793 78.9397Z" fill="black"/>
+                                </g>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="skill-name">JavaScript</div>
+                    </div>
+                    <div class="skill-card">
+                        <div class="skill-icon">
+                            <svg viewBox="-8.78 0 70 70" xmlns="http://www.w3.org/2000/svg">
+                                <path d="m 852.97077,1013.9363 c -6.55238,-0.4723 -13.02857,-2.1216 -17.00034,-4.3296 -2.26232,-1.2576 -3.98589,-2.8032 -4.66223,-4.1807 l -0.4024,-0.8196 0,-25.70807 0,-25.7081 0.31843,-0.6465 c 1.42297,-2.889 5.96432,-5.4935 12.30378,-7.0562 2.15195,-0.5305 5.2586,-1.0588 7.79304,-1.3252 2.58797,-0.2721 9.44765,-0.2307 12.02919,0.073 6.86123,0.8061 12.69967,2.6108 16.29768,5.0377 1.38756,0.9359 2.81137,2.4334 3.29371,3.4642 l 0.41358,0.8838 -0.0354,25.6303 -0.0354,25.63047 -0.33195,0.6744 c -0.18257,0.3709 -0.73406,1.1007 -1.22553,1.6216 -2.99181,3.1715 -9.40919,5.5176 -17.8267,6.5172 -1.71567,0.2038 -9.16916,0.3686 -10.92937,0.2417 z m 12.07501,-22.02839 c -0.0252,-0.0657 -1.00472,-0.93831 -2.17671,-1.93922 -1.17199,-1.00091 -2.18138,-1.86687 -2.24309,-1.92436 -0.0617,-0.0575 0.15481,-0.26106 0.48117,-0.45237 0.32635,-0.19131 0.95163,-0.7235 1.3895,-1.18265 1.2805,-1.34272 1.88466,-3.00131 1.88466,-5.17388 0,-2.1388 -0.65162,-3.8645 -1.95671,-5.1818 -1.31533,-1.3278 -2.82554,-1.8983 -5.02486,-1.8983 -3.39007,0 -5.99368,1.9781 -6.82468,5.1851 -0.28586,1.1031 -0.28432,3.33211 0.003,4.31023 0.74941,2.55136 2.79044,4.40434 5.33062,4.83946 0.8596,0.14724 0.97605,0.21071 1.5621,0.85144 0.34829,0.38078 1.06301,1.14085 1.58827,1.68904 l 0.95501,0.9967 2.53878,0 c 1.39633,0 2.51816,-0.0537 2.49296,-0.11939 z m -8.70653,-7.10848 c -0.61119,-0.31868 -0.84225,-0.56599 -1.19079,-1.27453 -0.26919,-0.54724 -0.31522,-0.85851 -0.31824,-2.15197 -0.003,-1.3143 0.0388,-1.5983 0.31987,-2.169 0.45985,-0.9339 1.09355,-1.376 2.07384,-1.4469 1.36454,-0.099 2.15217,0.5707 2.56498,2.1801 0.50612,1.97321 -0.0504,4.07107 -1.26471,4.76729 -0.63707,0.36527 -1.58737,0.40659 -2.18495,0.095 z m -11.25315,3.66269 c 2.66179,-0.5048 4.1728,-2.0528 4.1728,-4.27495 0,-1.97137 -0.97548,-3.12004 -3.6716,-4.32364 -1.54338,-0.689 -2.10241,-1.1215 -2.10241,-1.6268 0,-0.4188 0.53052,-0.8777 1.14813,-0.993 0.60302,-0.1126 2.20237,0.1652 3.14683,0.5467 l 0.79167,0.3198 0,-1.7524 0,-1.7525 -0.85923,-0.1906 c -0.53103,-0.1178 -1.64689,-0.1885 -2.92137,-0.1849 -1.80528,0 -2.15881,0.044 -2.83818,0.3138 -1.98445,0.7878 -2.92613,2.1298 -2.91107,4.1485 0.0141,1.8898 1.01108,3.06864 3.49227,4.12912 1.46399,0.62572 2.05076,1.10218 2.05076,1.66522 0,1.1965 -1.99362,1.34375 -4.10437,0.30315 -0.57805,-0.28498 -1.09739,-0.54137 -1.1541,-0.56976 -0.0567,-0.0284 -0.10311,0.79023 -0.10311,1.81917 0,1.86239 0.002,1.87137 0.33919,1.99974 1.26979,0.48278 4.07626,0.69787 5.52379,0.42335 z m 30.4308,-1.72766 0,-1.58098 -2.40584,0 -2.40583,0 0,-5.43035 0,-5.4303 -2.13089,0 -2.13088,0 0,7.0113 0,7.01131 4.53672,0 4.53672,0 0,-1.58098 z m -14.84745,-27.70503 c 4.23447,-0.2937 7.4086,-0.8482 10.20178,-1.7821 2.78264,-0.9304 4.42643,-2.0562 4.79413,-3.2834 0.14166,-0.4729 0.13146,-0.6523 -0.0665,-1.1708 -0.88775,-2.3245 -5.84694,-4.1104 -13.42493,-4.8345 -3.24154,-0.3098 -9.13671,-0.2094 -12.22745,0.2081 -4.71604,0.6372 -8.54333,1.8208 -10.2451,3.1683 -3.44251,2.726 0.19793,5.7242 8.66397,7.1354 3.67084,0.6119 8.42674,0.828 12.30414,0.559 z" fill="#00bcf2" transform="translate(-830.906 -943.981)"></path>
+                            </svg>
+                        </div>
+                        <div class="skill-name">SQL</div>
+                    </div>
+                    <div class="skill-card"><div class="skill-icon"><svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48">
+                                <path fill="#283593" fill-rule="evenodd" d="M22.903,3.286c0.679-0.381,1.515-0.381,2.193,0 c3.355,1.883,13.451,7.551,16.807,9.434C42.582,13.1,43,13.804,43,14.566c0,3.766,0,15.101,0,18.867 c0,0.762-0.418,1.466-1.097,1.847c-3.355,1.883-13.451,7.551-16.807,9.434c-0.679,0.381-1.515,0.381-2.193,0 c-3.355-1.883-13.451-7.551-16.807-9.434C5.418,34.899,5,34.196,5,33.434c0-3.766,0-15.101,0-18.867 c0-0.762,0.418-1.466,1.097-1.847C9.451,10.837,19.549,5.169,22.903,3.286z" clip-rule="evenodd"></path><path fill="#5c6bc0" fill-rule="evenodd" d="M5.304,34.404C5.038,34.048,5,33.71,5,33.255 c0-3.744,0-15.014,0-18.759c0-0.758,0.417-1.458,1.094-1.836c3.343-1.872,13.405-7.507,16.748-9.38 c0.677-0.379,1.594-0.371,2.271,0.008c3.343,1.872,13.371,7.459,16.714,9.331c0.27,0.152,0.476,0.335,0.66,0.576L5.304,34.404z" clip-rule="evenodd"></path><path fill="#fff" fill-rule="evenodd" d="M24,10c7.727,0,14,6.273,14,14s-6.273,14-14,14 s-14-6.273-14-14S16.273,10,24,10z M24,17c3.863,0,7,3.136,7,7c0,3.863-3.137,7-7,7s-7-3.137-7-7C17,20.136,20.136,17,24,17z" clip-rule="evenodd"></path><path fill="#3949ab" fill-rule="evenodd" d="M42.485,13.205c0.516,0.483,0.506,1.211,0.506,1.784 c0,3.795-0.032,14.589,0.009,18.384c0.004,0.396-0.127,0.813-0.323,1.127L23.593,24L42.485,13.205z" clip-rule="evenodd"></path>
+                                </svg></div><div class="skill-name">C</div></div>
+                    <div class="skill-card"><div class="skill-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width='1em' height='1em'><g fill="#61DAFB"><circle cx="64" cy="64" r="11.4"></circle><path d="M107.3 45.2c-2.2-.8-4.5-1.6-6.9-2.3c.6-2.4 1.1-4.8 1.5-7.1c2.1-13.2-.2-22.5-6.6-26.1c-1.9-1.1-4-1.6-6.4-1.6c-7 0-15.9 5.2-24.9 13.9c-9-8.7-17.9-13.9-24.9-13.9c-2.4 0-4.5.5-6.4 1.6c-6.4 3.7-8.7 13-6.6 26.1c.4 2.3.9 4.7 1.5 7.1c-2.4.7-4.7 1.4-6.9 2.3C8.2 50 1.4 56.6 1.4 64s6.9 14 19.3 18.8c2.2.8 4.5 1.6 6.9 2.3c-.6 2.4-1.1 4.8-1.5 7.1c-2.1 13.2.2 22.5 6.6 26.1c1.9 1.1 4 1.6 6.4 1.6c7.1 0 16-5.2 24.9-13.9c9 8.7 17.9 13.9 24.9 13.9c2.4 0 4.5-.5 6.4-1.6c6.4-3.7 8.7-13 6.6-26.1c-.4-2.3-.9-4.7-1.5-7.1c2.4-.7 4.7-1.4 6.9-2.3c12.5-4.8 19.3-11.4 19.3-18.8s-6.8-14-19.3-18.8M92.5 14.7c4.1 2.4 5.5 9.8 3.8 20.3c-.3 2.1-.8 4.3-1.4 6.6c-5.2-1.2-10.7-2-16.5-2.5c-3.4-4.8-6.9-9.1-10.4-13c7.4-7.3 14.9-12.3 21-12.3c1.3 0 2.5.3 3.5.9M81.3 74c-1.8 3.2-3.9 6.4-6.1 9.6c-3.7.3-7.4.4-11.2.4c-3.9 0-7.6-.1-11.2-.4q-3.3-4.8-6-9.6c-1.9-3.3-3.7-6.7-5.3-10c1.6-3.3 3.4-6.7 5.3-10c1.8-3.2 3.9-6.4 6.1-9.6c3.7-.3 7.4-.4 11.2-.4c3.9 0 7.6.1 11.2.4q3.3 4.8 6 9.6c1.9 3.3 3.7 6.7 5.3 10c-1.7 3.3-3.4 6.6-5.3 10m8.3-3.3c1.5 3.5 2.7 6.9 3.8 10.3c-3.4.8-7 1.4-10.8 1.9c1.2-1.9 2.5-3.9 3.6-6c1.2-2.1 2.3-4.2 3.4-6.2M64 97.8c-2.4-2.6-4.7-5.4-6.9-8.3c2.3.1 4.6.2 6.9.2s4.6-.1 6.9-.2c-2.2 2.9-4.5 5.7-6.9 8.3m-18.6-15c-3.8-.5-7.4-1.1-10.8-1.9c1.1-3.3 2.3-6.8 3.8-10.3c1.1 2 2.2 4.1 3.4 6.1c1.2 2.2 2.4 4.1 3.6 6.1m-7-25.5c-1.5-3.5-2.7-6.9-3.8-10.3c3.4-.8 7-1.4 10.8-1.9c-1.2 1.9-2.5 3.9-3.6 6c-1.2 2.1-2.3 4.2-3.4 6.2M64 30.2c2.4 2.6 4.7 5.4 6.9 8.3c-2.3-.1-4.6-.2-6.9-.2s-4.6.1-6.9.2c2.2-2.9 4.5-5.7 6.9-8.3m22.2 21l-3.6-6c3.8.5 7.4 1.1 10.8 1.9c-1.1 3.3-2.3 6.8-3.8 10.3c-1.1-2.1-2.2-4.2-3.4-6.2M31.7 35c-1.7-10.5-.3-17.9 3.8-20.3c1-.6 2.2-.9 3.5-.9c6 0 13.5 4.9 21 12.3c-3.5 3.8-7 8.2-10.4 13c-5.8.5-11.3 1.4-16.5 2.5c-.6-2.3-1-4.5-1.4-6.6M7 64c0-4.7 5.7-9.7 15.7-13.4c2-.8 4.2-1.5 6.4-2.1c1.6 5 3.6 10.3 6 15.6c-2.4 5.3-4.5 10.5-6 15.5C15.3 75.6 7 69.6 7 64m28.5 49.3c-4.1-2.4-5.5-9.8-3.8-20.3c.3-2.1.8-4.3 1.4-6.6c5.2 1.2 10.7 2 16.5 2.5c3.4 4.8 6.9 9.1 10.4 13c-7.4 7.3-14.9 12.3-21 12.3c-1.3 0-2.5-.3-3.5-.9M96.3 93c1.7 10.5.3 17.9-3.8 20.3c-1 .6-2.2.9-3.5.9c-6 0-13.5-4.9-21-12.3c3.5-3.8 7-8.2 10.4-13c5.8-.5 11.3-1.4 16.5-2.5c.6 2.3 1 4.5 1.4 6.6m9-15.6c-2 .8-4.2 1.5-6.4 2.1c-1.6-5-3.6-10.3-6-15.6c2.4-5.3 4.5-10.5 6-15.5c13.8 4 22.1 10 22.1 15.6c0 4.7-5.8 9.7-15.7 13.4"></path></g></svg></div><div class="skill-name">React</div></div>
+                    <div class="skill-card"><div class="skill-icon"><svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M91.0588 5.74594C89.6221 9.23867 87.7643 12.3351 85.7083 15.1094C76.642 5.86979 63.9592 -0.000976562 49.9635 -0.000976562C22.4675 -0.000976562 0 22.3426 0 49.9377C0 64.3545 6.16802 77.3346 15.9526 86.5L17.8105 88.1596C26.4556 95.4671 37.7017 99.9012 49.9387 99.9012C76.1961 99.9012 97.8214 79.4154 99.6792 53.5543C101.165 40.9953 97.3507 24.9188 91.0588 5.74594ZM23.1858 86.9211C21.7491 88.7789 19.0738 88.9771 17.216 87.5404C15.3581 86.1036 15.16 83.4284 16.5967 81.5705C18.0334 79.7127 20.7087 79.5145 22.5665 80.9512C24.3253 82.388 24.6225 85.0632 23.1858 86.9211ZM90.7616 71.9841C78.4999 88.3578 52.1433 82.8091 35.3485 83.6265C35.3485 83.6265 32.3512 83.8247 29.3786 84.2458C29.3786 84.2458 30.5181 83.7256 31.9548 83.2054C43.7954 79.0934 49.369 78.2512 56.5774 74.5603C70.0777 67.6491 83.5532 52.5139 86.2532 36.8585C81.1008 51.8946 65.4454 64.8747 51.2268 70.1262C41.4422 73.7428 23.8299 77.2356 23.8299 77.2356L23.1115 76.8144C11.1718 70.9437 10.7507 44.9835 32.5989 36.6356C42.1853 32.9199 51.2516 34.9759 61.6555 32.5236C72.6786 29.9474 85.4606 21.6986 90.5882 10.8983C96.3103 28.3125 103.321 55.2883 90.7616 71.9841Z" fill="#6CB52D"></path>
+                                <path d="M23.1858 86.921C21.7491 88.7789 19.0738 88.9771 17.216 87.5403C15.3581 86.1036 15.16 83.4283 16.5967 81.5705C18.0334 79.7126 20.7087 79.5145 22.5666 80.9512C24.3253 82.3879 24.6226 85.0632 23.1858 86.921Z" fill="#6CB52D"></path>
+                                </svg></div><div class="skill-name">Spring Boot</div></div>
+                    <div class="skill-card"><div class="skill-icon"><img src="https://www.vectorlogo.zone/logos/postgresql/postgresql-icon.svg" alt="PostgreSQL"></div><div class="skill-name">PostgreSQL</div></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="portfolio" class="portfolio">
+            <div>
+                <h2>Portfolio</h2>
+                <div class="projects-grid">
+                    <!-- Project Cards -->
+                    <div class="project-card">
+                        <div class="project-bg"><img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&h=400&fit=crop" alt="Project" class="project-image"></div>
+                        <div class="project-info">
+                            <div class="project-number">01</div>
+                            <div class="project-title">Exam Scheduler</div>
+                            <div class="project-tech"><span class="tech-tag">ReactJS</span><span class="tech-tag">PostgreSQL</span><span class="tech-tag">Spring Boot</span></div>
+                            <div class="project-link">View Project →</div>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-bg"><img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop" alt="Project" class="project-image"></div>
+                        <div class="project-info">
+                            <div class="project-number">02</div>
+                            <div class="project-title">Empor</div>
+                            <div class="project-tech"><span class="tech-tag">NextJS</span><span class="tech-tag">Prisma</span><span class="tech-tag">Spring Boot</span></div>
+                            <div class="project-link">View Project →</div>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-bg"><img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=600&h=400&fit=crop" alt="Project" class="project-image"></div>
+                        <div class="project-info">
+                            <div class="project-number">03</div>
+                            <div class="project-title">PL Match Predictor</div>
+                            <div class="project-tech"><span class="tech-tag">Python</span><span class="tech-tag">Scikit Learn</span><span class="tech-tag">Pandas</span></div>
+                            <div class="project-link">View Project →</div>
+                        </div>
+                    </div>
+                    <div class="project-card">
+                        <div class="project-bg"><img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&h=400&fit=crop" alt="Project" class="project-image"></div>
+                        <div class="project-info">
+                            <div class="project-number">04</div>
+                            <div class="project-title">PremierZone</div>
+                            <div class="project-tech"><span class="tech-tag">ReactJS</span><span class="tech-tag">PostgreSQL</span><span class="tech-tag">Spring Boot</span></div>
+                            <div class="project-link">View Project →</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <div>
+                <h2>Get In Touch</h2>
+                <p class="contact-text">
+                    I'm always open to discussing new projects, creative ideas, or opportunities to be part of an ambitious vision. Feel free to connect with me.
+                </p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/arka-garai-908775378/" target="_blank" class="social-icon" aria-label="LinkedIn">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48">
+<path fill="#0288D1" d="M42,37c0,2.762-2.238,5-5,5H11c-2.761,0-5-2.238-5-5V11c0-2.762,2.239-5,5-5h26c2.762,0,5,2.238,5,5V37z"></path><path fill="#FFF" d="M12 19H17V36H12zM14.485 17h-.028C12.965 17 12 15.888 12 14.499 12 13.08 12.995 12 14.514 12c1.521 0 2.458 1.08 2.486 2.499C17 15.887 16.035 17 14.485 17zM36 36h-5v-9.099c0-2.198-1.225-3.698-3.192-3.698-1.501 0-2.313 1.012-2.707 1.99C24.957 25.543 25 26.511 25 27v9h-5V19h5v2.616C25.721 20.5 26.85 19 29.738 19c3.578 0 6.261 2.25 6.261 7.274L36 36 36 36z"></path>
+</svg>
+                    </a>
+                    <a href="https://github.com/arka6fx" target="_blank" class="social-icon" aria-label="GitHub">
+                        <svg viewBox="0 -0.5 48 48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>Github-color</title> <desc>Created with Sketch.</desc> <defs> </defs> <g id="Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"> <g id="Color-" transform="translate(-700.000000, -560.000000)" fill="#3E75C3"> <path d="M723.9985,560 C710.746,560 700,570.787092 700,584.096644 C700,594.740671 706.876,603.77183 716.4145,606.958412 C717.6145,607.179786 718.0525,606.435849 718.0525,605.797328 C718.0525,605.225068 718.0315,603.710086 718.0195,601.699648 C711.343,603.155898 709.9345,598.469394 709.9345,598.469394 C708.844,595.686405 707.2705,594.94548 707.2705,594.94548 C705.091,593.450075 707.4355,593.480194 707.4355,593.480194 C709.843,593.650366 711.1105,595.963499 711.1105,595.963499 C713.2525,599.645538 716.728,598.58234 718.096,597.964902 C718.3135,596.407754 718.9345,595.346062 719.62,594.743683 C714.2905,594.135281 708.688,592.069123 708.688,582.836167 C708.688,580.205279 709.6225,578.054788 711.1585,576.369634 C710.911,575.759726 710.0875,573.311058 711.3925,569.993458 C711.3925,569.993458 713.4085,569.345902 717.9925,572.46321 C719.908,571.928599 721.96,571.662047 724.0015,571.651505 C726.04,571.662047 728.0935,571.928599 730.0105,572.46321 C734.5915,569.345902 736.603,569.993458 736.603,569.993458 C737.9125,573.311058 737.089,575.759726 736.8415,576.369634 C738.3805,578.054788 739.309,580.205279 739.309,582.836167 C739.309,592.091712 733.6975,594.129257 728.3515,594.725612 C729.2125,595.469549 729.9805,596.939353 729.9805,599.18773 C729.9805,602.408949 729.9505,605.006706 729.9505,605.797328 C729.9505,606.441873 730.3825,607.191834 731.6005,606.9554 C741.13,603.762794 748,594.737659 748,584.096644 C748,570.787092 737.254,560 723.9985,560" id="Github"> </path> </g> </g> </g></svg>
+                    </a>
+                    <a href="https://x.com/arka6fx" target="_blank" class="social-icon" aria-label="X">
+                        <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 509.64"><rect width="512" height="509.64" rx="115.61" ry="115.61"></rect><path fill="#fff" fill-rule="nonzero" d="M323.74 148.35h36.12l-78.91 90.2 92.83 122.73h-72.69l-56.93-74.43-65.15 74.43h-36.14l84.4-96.47-89.05-116.46h74.53l51.46 68.04 59.53-68.04zm-12.68 191.31h20.02l-129.2-170.82H180.4l130.66 170.82z"></path></svg>
+                    </a>
+                    <a href="https://www.instagram.com/arka6fx" target="_blank" class="social-icon" aria-label="Instagram">
+                        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#paint0_radial_87_7153)"></rect> <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#paint1_radial_87_7153)"></rect> <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#paint2_radial_87_7153)"></rect> <path d="M23 10.5C23 11.3284 22.3284 12 21.5 12C20.6716 12 20 11.3284 20 10.5C20 9.67157 20.6716 9 21.5 9C22.3284 9 23 9.67157 23 10.5Z" fill="white"></path> <path fill-rule="evenodd" clip-rule="evenodd" d="M16 21C18.7614 21 21 18.7614 21 16C21 13.2386 18.7614 11 16 11C13.2386 11 11 13.2386 11 16C11 18.7614 13.2386 21 16 21ZM16 19C17.6569 19 19 17.6569 19 16C19 14.3431 17.6569 13 16 13C14.3431 13 13 14.3431 13 16C13 17.6569 14.3431 19 16 19Z" fill="white"></path> <path fill-rule="evenodd" clip-rule="evenodd" d="M6 15.6C6 12.2397 6 10.5595 6.65396 9.27606C7.2292 8.14708 8.14708 7.2292 9.27606 6.65396C10.5595 6 12.2397 6 15.6 6H16.4C19.7603 6 21.4405 6 22.7239 6.65396C23.8529 7.2292 24.7708 8.14708 25.346 9.27606C26 10.5595 26 12.2397 26 15.6V16.4C26 19.7603 26 21.4405 25.346 22.7239C24.7708 23.8529 23.8529 24.7708 22.7239 25.346C21.4405 26 19.7603 26 16.4 26H15.6C12.2397 26 10.5595 26 9.27606 25.346C8.14708 24.7708 7.2292 23.8529 6.65396 22.7239C6 21.4405 6 19.7603 6 16.4V15.6ZM15.6 8H16.4C18.1132 8 19.2777 8.00156 20.1779 8.0751C21.0548 8.14674 21.5032 8.27659 21.816 8.43597C22.5686 8.81947 23.1805 9.43139 23.564 10.184C23.7234 10.4968 23.8533 10.9452 23.9249 11.8221C23.9984 12.7223 24 13.8868 24 15.6V16.4C24 18.1132 23.9984 19.2777 23.9249 20.1779C23.8533 21.0548 23.7234 21.5032 23.564 21.816C23.1805 22.5686 22.5686 23.1805 21.816 23.564C21.5032 23.7234 21.0548 23.8533 20.1779 23.9249C19.2777 23.9984 18.1132 24 16.4 24H15.6C13.8868 24 12.7223 23.9984 11.8221 23.9249C10.9452 23.8533 10.4968 23.7234 10.184 23.564C9.43139 23.1805 8.81947 22.5686 8.43597 21.816C8.27659 21.5032 8.14674 21.0548 8.0751 20.1779C8.00156 19.2777 8 18.1132 8 16.4V15.6C8 13.8868 8.00156 12.7223 8.0751 11.8221C8.14674 10.9452 8.27659 10.4968 8.43597 10.184C8.81947 9.43139 9.43139 8.81947 10.184 8.43597C10.4968 8.27659 10.9452 8.14674 11.8221 8.0751C12.7223 8.00156 13.8868 8 15.6 8Z" fill="white"></path> <defs> <radialGradient id="paint0_radial_87_7153" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(12 23) rotate(-55.3758) scale(25.5196)"> <stop stop-color="#B13589"></stop> <stop offset="0.79309" stop-color="#C62F94"></stop> <stop offset="1" stop-color="#8A3AC8"></stop> </radialGradient> <radialGradient id="paint1_radial_87_7153" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(11 31) rotate(-65.1363) scale(22.5942)"> <stop stop-color="#E0E8B7"></stop> <stop offset="0.444662" stop-color="#FB8A2E"></stop> <stop offset="0.71474" stop-color="#E2425C"></stop> <stop offset="1" stop-color="#E2425C" stop-opacity="0"></stop> </radialGradient> <radialGradient id="paint2_radial_87_7153" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(0.500002 3) rotate(-8.1301) scale(38.8909 8.31836)"> <stop offset="0.156701" stop-color="#406ADC"></stop> <stop offset="0.467799" stop-color="#6A45BE"></stop> <stop offset="1" stop-color="#6A45BE" stop-opacity="0"></stop> </radialGradient> </defs> </g></svg>
+                    </a>
+                    <a href="mailto:contact.arkagarai@gmail.com" class="social-icon" aria-label="Gmail">
+                        <svg xmlns="http://www.w3.org/2000/svg" aria-label="Gmail" role="img" viewBox="0 0 512 512" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><rect width="512" height="512" rx="15%" fill="#ffffff"></rect><path d="M158 391v-142l-82-63V361q0 30 30 30" fill="#4285f4"></path><path d="M 154 248l102 77l102-77v-98l-102 77l-102-77" fill="#ea4335"></path><path d="M354 391v-142l82-63V361q0 30-30 30" fill="#34a853"></path><path d="M76 188l82 63v-98l-30-23c-27-21-52 0-52 26" fill="#c5221f"></path><path d="M436 188l-82 63v-98l30-23c27-21 52 0 52 26" fill="#fbbc04"></path></g></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.sidebar-nav a'); // --- MODIFICATION: Scoped to sidebar-nav
+            const hamburger = document.querySelector('.hamburger');
+            const sidebar = document.querySelector('.sidebar');
+
+            // --- Hamburger Menu Toggle ---
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                sidebar.classList.toggle('show');
+            });
+
+            // --- Active Nav Link on Scroll ---
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.55
+            };
+
+            const sectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href') === `#${id}`) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                sectionObserver.observe(section);
+            });
+            
+            // --- Close sidebar when a link is clicked ---
+            document.querySelectorAll('.sidebar a').forEach(link => { // Listen on all sidebar links
+                link.addEventListener('click', () => {
+                    if (sidebar.classList.contains('show')) {
+                        hamburger.classList.remove('active');
+                        sidebar.classList.remove('show');
+                    }
+                });
+            });
+
+            // --- MODIFICATION: New dynamic typing animation ---
+            function enhancedTypewriterAnimation() {
+                const element = document.getElementById('typing-effect');
+                if (!element) return;
+                
+                const phrases = ["developer.", "problem-solver.", "computer engineer."];
+                let phraseIndex = 0;
+                let charIndex = 0;
+                let isDeleting = false;
+
+                const typeSpeed = 100;
+                const deleteSpeed = 50;
+                const delayBetweenPhrases = 2000;
+
+                function animate() {
+                    const currentPhrase = phrases[phraseIndex];
+                    let displayText = '';
+
+                    if (isDeleting) {
+                        displayText = currentPhrase.substring(0, charIndex - 1);
+                        charIndex--;
+                    } else {
+                        displayText = currentPhrase.substring(0, charIndex + 1);
+                        charIndex++;
+                    }
+
+                    element.textContent = displayText;
+
+                    let timeout = isDeleting ? deleteSpeed : typeSpeed;
+
+                    if (!isDeleting && charIndex === currentPhrase.length) {
+                        isDeleting = true;
+                        timeout = delayBetweenPhrases; // Pause before deleting
+                    } else if (isDeleting && charIndex === 0) {
+                        isDeleting = false;
+                        phraseIndex = (phraseIndex + 1) % phrases.length; // Move to the next phrase
+                    }
+
+                    setTimeout(animate, timeout);
+                }
+                
+                // Start the animation after a short delay
+                setTimeout(animate, 500);
+            }
+
+            enhancedTypewriterAnimation();
+
+            // --- Three.js animation ---
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+            
+            // --- MODIFICATION: Adjusted for new sidebar width and responsiveness ---
+            const sidebarWidth = window.innerWidth > 768 ? 80 : 0;
+            renderer.setSize(window.innerWidth - sidebarWidth, window.innerHeight);
+            camera.aspect = (window.innerWidth - sidebarWidth) / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            
+            const particlesGeometry = new THREE.BufferGeometry;
+            const particlesCount = 5000;
+            
+            const posArray = new Float32Array(particlesCount * 3);
+            
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 5;
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.005,
+                color: 0xA384FF,
+            });
+            
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            camera.position.z = 2;
+            
+            const clock = new THREE.Clock();
+            
+            const animate = () => {
+                const elapsedTime = clock.getElapsedTime();
+                
+                particlesMesh.rotation.y = elapsedTime * 0.1;
+                particlesMesh.rotation.x = elapsedTime * 0.05;
+
+                renderer.render(scene, camera);
+                window.requestAnimationFrame(animate);
+            };
+            animate();
+            
+            // --- MODIFICATION: Updated resize listener for new sidebar width ---
+            window.addEventListener('resize', () => {
+                const newSidebarWidth = window.innerWidth > 768 ? 80 : 0;
+                const newWidth = window.innerWidth - newSidebarWidth;
+                renderer.setSize(newWidth, window.innerHeight);
+                camera.aspect = newWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            });
+
+        });
+    </script>
+</body>
+</html>
